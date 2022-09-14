@@ -31,24 +31,29 @@ module.exports.createCard = (req, res) => {
 module.exports.deleteCardById = (req, res) => {
   if (mongoose.isValidObjectId(req.params.cardId)) {
     Card.findById(req.params.cardId)
-      .orFail(() => new Error('Not Found'))
+      .orFail(() => {
+        throw new Error('Not Found');
+      })
       .then((card) => Card.deleteOne(card).then(() => res.send({ card }))) // нашли, удаляем
       .catch(() => res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' }));
+  } else {
+    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
   }
-  return res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
 };
 
 module.exports.likeCard = (req, res) => {
   if (mongoose.isValidObjectId(req.params.cardId)) {
     Card.findById(req.params.cardId)
-      .orFail(() => new Error('Not Found'))
+      .orFail(() => {
+        throw new Error('Not Found');
+      })
       .then((card) => Card.updateOne(
         { _id: req.params.cardId },
         { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
         { new: true },
       ).then(() => res.send({ card })))
       .catch((err) => {
-        if (err.name === 'DocumentNotFoundError') {
+        if (err.name === 'Error') {
           return res.status(NOT_FOUND).send({
             message: 'Передан несуществующий _id карточки',
           });
@@ -57,22 +62,23 @@ module.exports.likeCard = (req, res) => {
           .status(SERVER_ERROR)
           .send({ message: 'На сервере произошла ошибка' });
       });
+  } else {
+    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
   }
-  return res.status(BAD_REQUEST).send({
-    message: 'Переданы некорректные данные',
-  });
 };
 module.exports.dislikeCard = (req, res) => {
   if (mongoose.isValidObjectId(req.params.cardId)) {
     Card.findById(req.params.cardId)
-      .orFail(() => new Error('Not Found'))
+      .orFail(() => {
+        throw new Error('Not Found');
+      })
       .then((card) => Card.updateOne(
         { _id: req.params.cardId },
         { $pull: { likes: req.user._id } },
         { new: true },
       ).then(() => res.send({ data: card })))
       .catch((err) => {
-        if (err.name === 'DocumentNotFoundError') {
+        if (err.name === 'Error') {
           return res
             .status(NOT_FOUND)
             .send({ message: 'Передан несуществующий _id карточки' });
@@ -81,7 +87,7 @@ module.exports.dislikeCard = (req, res) => {
           .status(SERVER_ERROR)
           .send({ message: 'На сервере произошла ошибка' });
       });
-  } return res.status(BAD_REQUEST).send({
-    message: 'Переданы некорректные данные',
-  });
+  } else {
+    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+  }
 };

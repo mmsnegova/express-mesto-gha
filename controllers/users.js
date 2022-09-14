@@ -15,23 +15,24 @@ module.exports.getUsers = (req, res) => {
 module.exports.getUserById = (req, res) => {
   if (mongoose.isValidObjectId(req.params.userId)) {
     User.findById(req.params.userId)
-      .orFail(() => new Error())
+      .orFail(() => {
+        throw new Error('Not Found');
+      })
       .then((user) => res.json(user))
       .catch((err) => {
-        if (err.name === 'DocumentNotFoundError') {
+        if (err.name === 'Error') {
           return res.status(NOT_FOUND).send({
             message: 'Пользователь по указанному _id не найден',
           });
         }
         return res
           .status(SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка', error: err.name });
+          .send({ message: 'На сервере произошла ошибка' });
       });
-  } return res.status(BAD_REQUEST).send({
-    message: 'Переданы некорректные данные',
-  });
+  } else {
+    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
+  }
 };
-
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
