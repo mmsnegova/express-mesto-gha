@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const User = require("../models/user");
 const {
   BAD_REQUEST,
@@ -14,17 +15,26 @@ module.exports.getUsers = (req, res) => {
 };
 
 module.exports.getUserById = (req, res) => {
-  User.findById(req.params.userId)
-    .then((user) => res.json(user))
-    .catch((err) => {
-      if (err.name === "CastError")
+  if (mongoose.isValidObjectId(req.params.userId)) {
+    User.findById(req.params.userId)
+      .orFail(() => {
+        new Error();
+      })
+      .then((user) => res.json(user))
+      .catch((err) => {
+        if (err.name === "DocumentNotFoundError")
+          return res.status(NOT_FOUND).send({
+            message: "Пользователь по указанному _id не найден",
+          });
         return res
-          .status(NOT_FOUND)
-          .send({ message: "Пользователь по указанному _id не найден" });
-      return res
-        .status(SERVER_ERROR)
-        .send({ message: "На сервере произошла ошибка" });
+          .status(SERVER_ERROR)
+          .send({ message: "На сервере произошла ошибка", error: err.name });
+      });
+  } else {
+    return res.status(BAD_REQUEST).send({
+      message: "Переданы некорректные данные",
     });
+  }
 };
 
 module.exports.createUser = (req, res) => {
