@@ -7,7 +7,7 @@ const {
 
 module.exports.getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
+    .then((users) => res.json(users))
     .catch(() =>
       res.status(SERVER_ERROR).send({ message: "На сервере произошла ошибка" })
     );
@@ -15,7 +15,7 @@ module.exports.getUsers = (req, res) => {
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.userId)
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.json(user))
     .catch((err) => {
       if (err.name === "CastError")
         return res
@@ -30,7 +30,7 @@ module.exports.getUserById = (req, res) => {
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.json(user))
     .catch((err) => {
       if (err.name === "ValidationError")
         return res.status(BAD_REQUEST).send({
@@ -49,7 +49,7 @@ module.exports.updateUserProfile = (req, res) => {
     { name, about },
     { new: true, runValidators: true }
   )
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.json(user))
     .catch((err) => {
       if (err.name === "ValidationError")
         return res.status(BAD_REQUEST).send({
@@ -72,7 +72,7 @@ module.exports.updateUserAvatar = (req, res) => {
     { avatar },
     { new: true, runValidators: true }
   )
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.json(user))
     .catch((err) => {
       if (err.name === "ValidationError")
         return res.status(BAD_REQUEST).send({
