@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 const {
@@ -29,65 +28,62 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCardById = (req, res) => {
-  if (mongoose.isValidObjectId(req.params.cardId)) {
-    Card.findById(req.params.cardId)
-      .orFail(() => {
-        throw new Error('Not Found');
-      })
-      .then((card) => Card.deleteOne(card).then(() => res.send({ card }))) // нашли, удаляем
-      .catch(() => res.status(NOT_FOUND).send({ message: 'Карточка с указанным _id не найдена' }));
-  } else {
-    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-  }
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((card) => Card.deleteOne(card).then(() => res.send({ card }))) // нашли, удаляем
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return res.status(BAD_REQUEST).send({ message: 'Невалидный id' });
+      }
+      if (err.message === 'NotFound') {
+        return res.status(NOT_FOUND).send({ message: 'Передан несуществующий id карточки' });
+      }
+      return res
+        .status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 
 module.exports.likeCard = (req, res) => {
-  if (mongoose.isValidObjectId(req.params.cardId)) {
-    Card.findById(req.params.cardId)
-      .orFail(() => {
-        throw new Error('Not Found');
-      })
-      .then((card) => Card.updateOne(
-        { _id: req.params.cardId },
-        { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
-        { new: true },
-      ).then(() => res.send({ card })))
-      .catch((err) => {
-        if (err.name === 'Error') {
-          return res.status(NOT_FOUND).send({
-            message: 'Передан несуществующий _id карточки',
-          });
-        }
-        return res
-          .status(SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
-      });
-  } else {
-    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-  }
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((card) => Card.updateOne(
+      { _id: req.params.cardId },
+      { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+      { new: true },
+    ).then(() => res.send({ card })))
+    .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(NOT_FOUND).send({ message: 'Передан несуществующий id карточки' });
+      }
+      if (err.name === 'CastError') {
+        return res.status(BAD_REQUEST).send({ message: 'Невалидный id' });
+      }
+      return res
+        .status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };
 module.exports.dislikeCard = (req, res) => {
-  if (mongoose.isValidObjectId(req.params.cardId)) {
-    Card.findById(req.params.cardId)
-      .orFail(() => {
-        throw new Error('Not Found');
-      })
-      .then((card) => Card.updateOne(
-        { _id: req.params.cardId },
-        { $pull: { likes: req.user._id } },
-        { new: true },
-      ).then(() => res.send({ data: card })))
-      .catch((err) => {
-        if (err.name === 'Error') {
-          return res
-            .status(NOT_FOUND)
-            .send({ message: 'Передан несуществующий _id карточки' });
-        }
-        return res
-          .status(SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
-      });
-  } else {
-    res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные' });
-  }
+  Card.findById(req.params.cardId)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((card) => Card.updateOne(
+      { _id: req.params.cardId },
+      { $pull: { likes: req.user._id } },
+      { new: true },
+    ).then(() => res.send({ data: card })))
+    .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(NOT_FOUND).send({ message: 'Передан несуществующий id карточки' });
+      }
+      if (err.name === 'CastError') {
+        return res.status(BAD_REQUEST).send({ message: 'Невалидный id' });
+      }
+      return res
+        .status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+    });
 };
