@@ -98,7 +98,7 @@ module.exports.updateUserAvatar = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(BAD_REQUEST).send({
-          message: 'Переданы некорректные данные при обновлении профиля',
+          message: 'Переданы некорректные данные при обновлении аватара',
         });
       }
       if (err.name === 'CastError') {
