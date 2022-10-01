@@ -1,9 +1,12 @@
 const validator = require('validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const {
   BAD_REQUEST,
   NOT_FOUND,
   SERVER_ERROR,
+  SALT_OR_ROUNDS,
 } = require('../constants/constants');
 
 module.exports.getUsers = (req, res) => {
@@ -32,6 +35,7 @@ module.exports.getUserById = (req, res) => {
         .send({ message: 'На сервере произошла ошибка' });
     });
 };
+
 module.exports.createUser = (req, res) => {
   const {
     name,
@@ -40,19 +44,24 @@ module.exports.createUser = (req, res) => {
     email,
     password,
   } = req.body;
+  if (!email || !password) {
+    res.status(BAD_REQUEST).send({ message: 'Ошибка!' });
+    return;
+  }
   if (!validator.isEmail(email)) {
     res.status(BAD_REQUEST).send({
       message: 'Передан невалидный email',
     });
     return;
   }
-  User.create({
-    name,
-    about,
-    avatar,
-    email,
-    password,
-  })
+  bcrypt.hash(password, SALT_OR_ROUNDS)
+    .then((hashPassword) => User.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hashPassword,
+    }))
     .then((user) => res.json(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -64,6 +73,39 @@ module.exports.createUser = (req, res) => {
         .status(SERVER_ERROR)
         .send({ message: 'На сервере произошла ошибка' });
     });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(BAD_REQUEST).send({ message: 'Ошибка!' });
+  }
+  return User.findOne({ email }).select('+password')
+    .then((user) => {
+      if (!user) {
+        return res.status(401).send({ message: 'Неправильные почта или пароль' });
+      }
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return res.status(401).send({ message: 'Неправильные почта или пароль' });
+          }
+          const token = jwt.sign({ _id: user._id }, 'super-strong-secret', {
+            expiresIn: '7d',
+          });
+          return res.status(200).send({ token });
+        })
+        .catch((err) => res.status(401).send({ message: err.message }));
+    });
+};
+
+module.exports.getUserInfo = (req, res) => {
+  User.findById(req.user._id)
+    .orFail(() => {
+      throw new Error('NotFound');
+    })
+    .then((user) => res.json(user))
+    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
 };
 
 module.exports.updateUserProfile = (req, res) => {
