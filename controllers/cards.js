@@ -1,5 +1,4 @@
 const Card = require('../models/card');
-const auth = require('../middlewares/auth');
 
 const {
   BAD_REQUEST,
@@ -29,14 +28,15 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCardById = (req, res) => {
-  if (!auth) {
-    res.status(401).send({ message: 'Недостаточно прав' });
-  }
-  return Card.findById(req.params.cardId)
+  Card.findById(req.params.cardId)
     .orFail(() => {
       throw new Error('NotFound');
     })
     .then((card) => {
+      if (JSON.stringify(card.owner) !== JSON.stringify(req.user._id)) {
+        res.status(401).send({ message: 'Недостаточно прав' });
+        return;
+      }
       Card.deleteOne(card).then(() => res.send({ card })); // нашли, удаляем
     }).catch((err) => {
       if (err.name === 'CastError') {

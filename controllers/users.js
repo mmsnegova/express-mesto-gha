@@ -99,7 +99,7 @@ module.exports.login = (req, res) => {
     });
 };
 
-module.exports.getUserInfo = (req, res) => {
+module.exports.getUserMe = (req, res) => {
   User.findById(req.user._id)
     .orFail(() => {
       throw new Error('NotFound');
