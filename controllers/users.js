@@ -1,4 +1,3 @@
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
@@ -39,12 +38,6 @@ module.exports.createUser = (req, res, next) => {
     email,
     password,
   } = req.body;
-  if (!email || !password) {
-    throw new BadRequestError('Ошибка');
-  }
-  if (!validator.isEmail(email)) {
-    throw new BadRequestError('Передан невалидный email');
-  }
   bcrypt.hash(password, SALT_OR_ROUNDS)
     .then((hashPassword) => User.create({
       name,
@@ -53,13 +46,16 @@ module.exports.createUser = (req, res, next) => {
       email,
       password: hashPassword,
     }))
-    .then((user) => res.json(user))
+    .then((user) => res.json({
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+      _id: user._id,
+    }))
     .catch((err) => {
       if (err.code === 11000) {
         throw new ConflictError('Пользователь с таким email уже существует');
-      }
-      if (err.name === 'ValidationError') {
-        throw new BadRequestError('Переданы некорректные данные при создании пользователя');
       }
       next(err);
     })
@@ -68,12 +64,6 @@ module.exports.createUser = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    throw new BadRequestError('Ошибка');
-  }
-  if (!validator.isEmail(email)) {
-    throw new BadRequestError('Передан невалидный email');
-  }
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
@@ -89,7 +79,7 @@ module.exports.login = (req, res, next) => {
           });
           return res.status(200).send({ token });
         }).catch(next);
-    });
+    }).catch(next);
 };
 
 module.exports.getUserMe = (req, res, next) => {
