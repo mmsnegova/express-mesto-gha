@@ -21,12 +21,6 @@ module.exports.getUserById = (req, res, next) => {
       throw new NotFoundError('Пользователь по указанному _id не найден');
     })
     .then((user) => res.json(user))
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        throw new BadRequestError('Невалидный id');
-      }
-      next(err);
-    })
     .catch(next);
 };
 
@@ -105,7 +99,6 @@ module.exports.updateUserProfile = (req, res, next) => {
     return res.json(user);
   })
     .catch((err) => {
-      if (err.name === 'ValidationError') throw new BadRequestError('Переданы некорректные данные при обновлении профиля');
       if (err.name === 'CastError') throw new BadRequestError('Невалидный id');
       next(err);
     }).catch(next);
@@ -125,7 +118,6 @@ module.exports.updateUserAvatar = (req, res, next) => {
     return res.json(user);
   })
     .catch((err) => {
-      if (err.name === 'ValidationError') throw new BadRequestError('Переданы некорректные данные при обновлении аватара');
       if (err.name === 'CastError') throw new BadRequestError('Невалидный id');
       next(err);
     })
