@@ -48,10 +48,7 @@ module.exports.createUser = (req, res, next) => {
       _id: user._id,
     }))
     .catch((err) => {
-      if (err.code === 11000) {
-        throw new ConflictError('Пользователь с таким email уже существует');
-      }
-      next(err);
+      if (err.code === 11000) next(new ConflictError('Пользователь с таким email уже существует'));
     })
     .catch(next);
 };
@@ -99,8 +96,7 @@ module.exports.updateUserProfile = (req, res, next) => {
     return res.json(user);
   })
     .catch((err) => {
-      if (err.name === 'CastError') throw new BadRequestError('Невалидный id');
-      next(err);
+      if (err.name === 'CastError') next(new BadRequestError('Невалидный id'));
     }).catch(next);
 };
 
@@ -118,8 +114,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
     return res.json(user);
   })
     .catch((err) => {
-      if (err.name === 'CastError') throw new BadRequestError('Невалидный id');
-      next(err);
+      if (err.name === 'CastError') next(new BadRequestError('Невалидный id'));
     })
     .catch(next);
 };
