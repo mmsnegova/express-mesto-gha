@@ -10,11 +10,11 @@ const {
   createUser,
 } = require('./controllers/users');
 const auth = require('./middlewares/auth');
+const NotFoundError = require('./errors/not-found-err');
 const error = require('./middlewares/error');
 const { regex } = require('./constants/constants');
 
 const { PORT = 3000 } = process.env;
-const { NOT_FOUND } = require('./constants/constants');
 
 const app = express();
 mongoose.connect('mongodb://localhost:27017/mestodb', {
@@ -44,7 +44,7 @@ app.post('/signup', celebrate({
 app.use(auth);
 app.use('/users', routerUsers);
 app.use('/cards', routerCards);
-app.use((req, res) => res.status(NOT_FOUND).send({ message: 'Страница не найдена' }));
+app.use((req, res, next) => next(new NotFoundError('Страница не найдена')));
 app.use(errors());
 app.use(error);
 app.listen(PORT);
