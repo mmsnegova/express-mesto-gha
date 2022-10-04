@@ -21,7 +21,13 @@ module.exports.getUserById = (req, res, next) => {
       throw new NotFoundError('Пользователь по указанному _id не найден');
     })
     .then((user) => res.json(user))
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Невалидный id'));
+      } else {
+        next(err);
+      }
+    });
 };
 
 module.exports.createUser = (req, res, next) => {
@@ -48,7 +54,13 @@ module.exports.createUser = (req, res, next) => {
       _id: user._id,
     }))
     .catch((err) => {
-      if (err.code === 11000) next(new ConflictError('Пользователь с таким email уже существует'));
+      if (err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
+      } else if (err.name === 'ValidationError') {
+        next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else {
+        next(err);
+      }
     });
 };
 
@@ -95,7 +107,11 @@ module.exports.updateUserProfile = (req, res, next) => {
     return res.json(user);
   })
     .catch((err) => {
-      if (err.name === 'CastError') next(new BadRequestError('Невалидный id'));
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Невалидный id'));
+      } else {
+        next(err);
+      }
     });
 };
 
@@ -113,6 +129,10 @@ module.exports.updateUserAvatar = (req, res, next) => {
     return res.json(user);
   })
     .catch((err) => {
-      if (err.name === 'CastError') next(new BadRequestError('Невалидный id'));
+      if (err.name === 'CastError') {
+        next(new BadRequestError('Невалидный id'));
+      } else {
+        next(err);
+      }
     });
 };
