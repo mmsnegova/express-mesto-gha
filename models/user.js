@@ -1,10 +1,16 @@
 const mongoose = require('mongoose');
+const isEmail = require('validator/lib/isEmail');
+const isURL = require('validator/lib/isURL');
 
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
     unique: true,
+    validate: {
+      validator: (v) => isEmail(v),
+      message: 'Неправильный формат почты',
+    },
   },
   password: {
     type: String,
@@ -27,7 +33,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     minlength: 2,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: {
+      validator: (v) => isURL(v),
+      message: 'avatar должен быть ссылкой',
+    },
   },
-});
+}, { versionKey: false });
 
 module.exports = mongoose.model('user', userSchema);
